@@ -121,27 +121,52 @@ class TripController extends Controller
     /**
      * جلب المواعيد التفصيلية المتاحة فقط في اليوم المختار
      */
+   /**
+     * جلب المواعيد التفصيلية المتاحة فقط في اليوم المختار مع بيانات المسار والكراجات
+     */
     public function getCompanyTrips(Request $request)
-    {
-        try {
-            // البحث عن المواعيد لشركة ومسار معينين
-            $query = \App\Models\Trip::where('company_id', $request->company_id)
-                ->where('route_id', $request->route_id);
+{
+    try {
+        // 💡 جلب بيانات المسار والباص المرتبط بالرحلة ديناميكياً بناءً على حقول قاعدة البيانات الحالية
+        $query = \App\Models\Trip::with([
+            'route:id,departure_address,arrival_address',
+            'bus:id,total_seats,bus_numbernnn' // 👈 تم التأكيد على مطابقة حقل قاعدة البيانات بدقة
+        ])
+        ->where('company_id', $request->company_id)
+        ->where('route_id', $request->route_id);
 
-            // --- التعديل الأهم: فلترة المواعيد حسب اليوم المختار من التطبيق ---
-            if ($request->has('day_index') && $request->day_index !== null) {
-                // التأكد أن موعد الرحلة هذا متاح في هذا اليوم (0 = الأحد، 1 = الاثنين، إلخ)
-                $query->whereJsonContains('days_of_week', (string)$request->day_index);
-            }
-
-            $trips = $query->get(['id', 'scheduled_time', 'days_of_week']);
-
-            return response()->json([
-                'status' => true,
-                'data' => $trips
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json(['status' => false, 'error' => $e->getMessage()], 500);
+        // --- الفلترة حسب اليوم المختار من التطبيق ---
+        if ($request->has('day_index') && $request->day_index !== null) {
+            $query->whereJsonContains('days_of_week', (string)$request->day_index);
         }
+
+        // إضافة bus_id للمصفوفة لكي تعمل علاقة الـ BelongsTo بشكل صحيح
+        $trips = $query->get(['id', 'route_id', 'bus_id', 'scheduled_time', 'days_of_week']);
+
+        return response()->json([
+            'status' => true,
+            'data' => $trips
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json(['status' => false, 'error' => $e->getMessage()], 500);
     }
+}
+
+
+
+    // داخل TripController.php
+
+    public function getReservedSeats(Request $request)
+{
+    // نحتاج للـ trip_id والتاريخ للتأكد من حجز المقاعد لهذا الموعد بالضبط
+    $reservedSeats = \App\Models\BookingSeat::where('trip_id', $request->trip_id)
+        ->where('travel_date', $request->travel_date)
+        ->pluck('seat_number')
+        ->toArray();
+
+    return response()->json([
+        'status' => true,
+        'reserved_seats' => $reservedSeats
+    ]);
+}
 }
