@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 // استخدمت هاد الكلاس مشان رابط انشاء حساب جديد register
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TripController;
+//كونترولر الحجز
+use App\Http\Controllers\Api\BookingController;
 
 
 Route::get('/user', function (Request $request) {
@@ -55,3 +57,14 @@ Route::get('/search-trips', [TripController::class, 'search']);
 
 //للمواعيد
 Route::get('/get-company-trips', [TripController::class, 'getCompanyTrips']);
+
+
+
+
+
+
+
+
+
+// رابط الـ API  المسؤول عن حفظ وتأكيد الحجوزات والمقاعد بالكامل
+Route::post('/store-booking', [BookingController::class, 'store']);
