@@ -5,14 +5,27 @@ use Illuminate\Support\Facades\Route;
 
 // استخدمت هاد الكلاس مشان رابط انشاء حساب جديد register
 use App\Http\Controllers\Api\AuthController;
+//للحجز
 use App\Http\Controllers\Api\TripController;
 //كونترولر الحجز
 use App\Http\Controllers\Api\BookingController;
+//كونترولر العروض
+use App\Http\Controllers\Api\OfferController;
 
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+
+// الروابط المحمية التي تتطلب تسجيل الدخول وتمرير التوكن (Sanctum Middleware)
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // الرابط الافتراضي لجلب بيانات المستخدم الحالي
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    // الرابط الجديد: المسؤول عن تحديث بيانات الملف الشخصي (الاسم والهاتف) في الداتابيز
+    Route::put('/update-profile', [AuthController::class, 'updateProfile']);
+
+});
 
 
 // رابط إنشاء حساب للمسافرين
@@ -68,3 +81,17 @@ Route::get('/get-company-trips', [TripController::class, 'getCompanyTrips']);
 
 // رابط الـ API  المسؤول عن حفظ وتأكيد الحجوزات والمقاعد بالكامل
 Route::post('/store-booking', [BookingController::class, 'store']);
+
+// رابط تاكيد الحجز بس بحماية لحتى ما بيقدر اي حدا مو مسجل دخولو يحجز 
+//Route::middleware('auth:sanctum')->group(function () {
+    // ضعي سطر الحجز هنا ليكون محمياً تماماً باسم المستخدم الحقيقي
+//     Route::post('/store-booking', [BookingController::class, 'store']);
+// });
+
+
+
+
+
+
+//لجلب العروض
+Route::get('/offers', [OfferController::class, 'index']);

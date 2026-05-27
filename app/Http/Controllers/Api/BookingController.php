@@ -33,8 +33,8 @@ class BookingController extends Controller
             // 3. تخزين بيانات الحجز الرئيسي في جدول bookings (تمت إزالة حقل notes لأنه غير موجود بأعمدة الجدول)
            // 3. تخزين بيانات الحجز الرئيسي في جدول bookings
 $booking = Booking::create([
-    'user_id'        => $request->user_id == 0 ? 1 : $request->user_id, // هون ثبتا ال id تبع المستخدم  الاول يلي هو ادمن النظام لحتى اربط واجهات تسجيل الدخول بعدلها
-    
+    // 'user_id'        => $request->user_id == 0 ? 1 : $request->user_id, // هون ثبتا ال id تبع المستخدم  الاول يلي هو ادمن النظام لحتى اربط واجهات تسجيل الدخول بعدلها
+    'user_id'        => auth('sanctum')->id() ?? ($request->user_id == 0 ? 1 : $request->user_id),
     'trip_id'        => $request->trip_id,
     'seats_count'    => $request->seats_count,
     'travel_date'    => $request->travel_date,

@@ -77,7 +77,7 @@ Mail::to($user->email)->send(new OtpMail(
         return response()->json([
             'status' => true,
             'message' => 'تم إنشاء الحساب مبدئياً، يرجى تفقد بريدك الإلكتروني',
-            'email' => $user->email // رجعنا الإيميل عشان الفلاتر يستخدمه بشاشة الـ OTP
+            'email' => $user->email // رحعنا الإيميل عشان الفلاتر يستخدمه بشاشة الـ OTP
         ], 201); 
     }
 
@@ -390,5 +390,37 @@ Mail::to($user->email)->send(new OtpMail(
     ], 200);
 }
 
+    // 8. الدالة الجديدة لتحديث بيانات الملف الشخصي (الاسم والهاتف) في قاعدة البيانات
+    public function updateProfile(Request $request)
+    {
+        // جلب المستخدم الحالي الحامل للتوكن (المسافر المسجل دخوله)
+        $user = $request->user(); 
+
+        // التحقق من صحة المدخلات والتأكد أن الهاتف الجديد ليس محجوزاً لمسافر آخر
+        $validator = Validator::make($request->all(), [
+            'name'  => 'required|string|max:255',
+            'phone' => 'required|string|unique:users,phone,' . $user->id,
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'البيانات المدخلة غير صالحة أو رقم الهاتف مستخدم بالفعل',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        // تحديث البيانات فوراً داخل جدول الـ users بالداتابيز
+        $user->update([
+            'name'  => $request->name,
+            'phone' => $request->phone,
+        ]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'تم تحديث بيانات ملفك الشخصي في قاعدة البيانات بنجاح',
+            'user'    => $user
+        ], 200);
+    }
 
 }
