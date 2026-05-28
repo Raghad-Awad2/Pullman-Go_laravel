@@ -24,6 +24,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // الرابط الجديد: المسؤول عن تحديث بيانات الملف الشخصي (الاسم والهاتف) في الداتابيز
     Route::put('/update-profile', [AuthController::class, 'updateProfile']);
+    //لرحلاتي لقادمة والسابقة
+    Route::get('/user-trips', [BookingController::class, 'getUserTrips']);
+    // مسار إلغاء الحجز الجديد
+    Route::post('/cancel-booking', [TripController::class, 'cancelBooking']);
 
 });
 
@@ -95,3 +99,12 @@ Route::post('/store-booking', [BookingController::class, 'store']);
 
 //لجلب العروض
 Route::get('/offers', [OfferController::class, 'index']);
+
+
+
+// رابط جلب المقاعد المحجوزة لرحلة معينة وتاريخ معين لتعرض باللون الرمادي في فلاتر
+Route::get('/get-reserved-seats', [TripController::class, 'getReservedSeats']);
+
+
+// رابط جلب رحلات المستخدم القادمة والسابقة (مفتوح ومباشر للتجريب بدون توكن)
+// Route::get('/user-trips/{user_id}', [BookingController::class, 'getUserTrips']);

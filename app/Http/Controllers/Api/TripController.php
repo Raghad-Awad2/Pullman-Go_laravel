@@ -158,15 +158,81 @@ class TripController extends Controller
 
     public function getReservedSeats(Request $request)
 {
-    // نحتاج للـ trip_id والتاريخ للتأكد من حجز المقاعد لهذا الموعد بالضبط
-    $reservedSeats = \App\Models\BookingSeat::where('trip_id', $request->trip_id)
-        ->where('travel_date', $request->travel_date)
-        ->pluck('seat_number')
+    // التحقق من وصول البيانات المطلوبة من التطبيق لضمان عدم حدوث انهيار
+    $request->validate([
+        'trip_id'     => 'required|integer',
+        'travel_date' => 'required|string',
+    ]);
+
+    // 💡 الربط الذكي: نجلب أرقام المقاعد من جدول booking_seats بشرط أن يكون الحجز التابع لها 
+    // في نفس الـ trip_id، ونفس الـ travel_date، وحالة الدفع ليست ملغية (canceled)
+    $reservedSeats = \App\Models\BookingSeat::join('bookings', 'booking_seats.booking_id', '=', 'bookings.id')
+        ->where('bookings.trip_id', $request->trip_id)
+        ->where('bookings.travel_date', $request->travel_date)
+        ->where('bookings.payment_status', '!=', 'canceled') // تأمين لكي تظهر المقاعد المُلغاة مستقبلاً كـ متاحة
+        ->pluck('booking_seats.seat_number')
+        ->map(function($seat) {
+            return (int)$seat; // تحويل السجلات إلى أرقام صحيح لكي تتطابق مع نوع البيانات في Flutter
+        })
         ->toArray();
 
     return response()->json([
         'status' => true,
         'reserved_seats' => $reservedSeats
+    ], 200);
+}
+
+
+/**
+ * إلغاء حجز معين للمسافر الحالي بأمان
+ */
+public function cancelBooking(Request $request)
+{
+    // التحقق من تمرير معرف الحجز المطلوب إلغاؤه
+    $request->validate([
+        'booking_id' => 'required|integer|exists:bookings,id',
     ]);
+
+    try {
+        // جلب المستخدم المسجل دخوله حالياً عبر السانكتوم (Token)
+        $user = $request->user();
+
+        // البحث عن الحجز التابع لهذا المستخدم حصراً لحماية البيانات من التلاعب
+        $booking = \App\Models\Booking::where('id', $request->booking_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'عذراً، هذا الحجز غير موجود أو لا يتبع لحسابك.'
+            ], 404);
+        }
+
+        // التحقق مما إذا كان الحجز ملغى مسبقاً
+        if ($booking->payment_status === 'canceled') {
+            return response()->json([
+                'status' => false,
+                'message' => 'هذا الحجز ملغى بالفعل.'
+            ], 400);
+        }
+
+        // 💡 تحديث حالة الحجز إلى ملغى (Canceled) لتحرير المقاعد تلقائياً
+        $booking->update([
+            'payment_status' => 'canceled'
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'تم إلغاء رحلتك بنجاح وتحرير المقاعد.'
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'حدث خطأ غير متوقع أثناء إلغاء الحجز',
+            'error' => $e->getMessage()
+        ], 500);
+    }
 }
 }
