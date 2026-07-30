@@ -88,7 +88,7 @@ class BookingController extends Controller
     }
 
     /**
-     * 🗺️ دالة جلب وتصنيف رحلات المستخدم المعدلة والآمنة 100% (تعتمد على التوكن)
+     * 🗺️ دالة جلب وتصنيف رحلات المستخدم  (تعتمد على التوكن)
      */
     public function getUserTrips(Request $request)
     {

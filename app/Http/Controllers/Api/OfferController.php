@@ -40,4 +40,20 @@ class OfferController extends Controller
         // 3. إرجاع البيانات المعدلة على شكل JSON
         return response()->json($formattedOffers);
     }
+
+
+    
+    public function getOfferDetails($id)
+{
+    $offer = Offer::with(['route'])->findOrFail($id);
+    
+    // هنا سنقوم بجلب التواريخ المتاحة بناءً على العرض
+    // والرحلات المرتبطة بالمسار
+    return response()->json([
+        'start_date' => $offer->start_date,
+        'end_date'   => $offer->end_date,
+        // هذه الدالة ستحتاج لجلب الرحلات (Trips) التي تتبع هذا الـ route
+        'trips'      => \App\Models\Trip::where('route_id', $offer->route_id)->get() 
+    ]);
+}
 }

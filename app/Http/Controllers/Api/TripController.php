@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Route; 
 use App\Models\City; 
 use Illuminate\Http\Request;
+use Carbon\Carbon; //مكتبة للتحقق من الوقت للحذف
 
 class TripController extends Controller
 {
@@ -154,7 +155,7 @@ class TripController extends Controller
 
 
 
-    // داخل TripController.php
+   
 
     public function getReservedSeats(Request $request)
 {

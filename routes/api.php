@@ -100,6 +100,8 @@ Route::post('/store-booking', [BookingController::class, 'store']);
 //لجلب العروض
 Route::get('/offers', [OfferController::class, 'index']);
 
+//لتتواصل العروض مع الحجز وتجيب تواريخ واوقات العرض
+Route::get('/offers/{id}/details', [OfferController::class, 'getOfferDetails']);
 
 
 // رابط جلب المقاعد المحجوزة لرحلة معينة وتاريخ معين لتعرض باللون الرمادي في فلاتر
